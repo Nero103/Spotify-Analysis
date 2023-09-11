@@ -15,19 +15,19 @@ ADD featured NVARCHAR(100);
 -- Identify by binary whether the song has a featured artist or not and assign to 'featured'
 UPDATE TopSpotifySongs2018
 SET featured = CASE
-				WHEN artists2 IS NOT NULL THEN 1
-				ELSE 0
-				END;
+		WHEN artists2 IS NOT NULL THEN 1
+		ELSE 0
+		END;
 
 
 /* Extract only the song title from the name column and 
 set those extracted names into a new column labeled 'modified_name' */
 ALTER TABLE TopSpotifySongs2018
 ADD modified_name AS CASE
-				WHEN CHARINDEX('(', name) > 0 
-				THEN LEFT(name, CHARINDEX('(', name) - 2)
-				ELSE name 
-				END; 
+			WHEN CHARINDEX('(', name) > 0 
+			THEN LEFT(name, CHARINDEX('(', name) - 2)
+			ELSE name 
+			END; 
 
 
 /* Transform the case for artists, artists2, and modified_name
