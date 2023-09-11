@@ -102,7 +102,7 @@ FROM CleanedTopSpotifySongs2018;
 
 /* Artist Analysis */
 
--- Which artists' had the most Top 100 songs?
+-- Which artists had the most Top 100 songs?
 SELECT cleaned_artists AS artist,
 		COUNT(cleaned_name) AS song_count,
 		CAST(ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM CleanedTopSpotifySongs2018),2) AS Decimal (4,2)) AS song_percentage
@@ -167,7 +167,14 @@ SELECT TOP 5 cleaned_artists, cleaned_name, duration_m,
 FROM CleanedTopSpotifySongs2018;
 
 
-/* What is the average duration of a song with or without a featured artists in milliseconds, seconds and minutes
+-- What are the songs with featured artists?
+SELECT cleaned_name AS song, cleaned_artists AS artitst, 
+		cleaned_artists_2 AS featured_artist
+FROM CleanedTopSpotifySongs2018
+WHERE featured = 1;
+
+
+/* What is the average duration of a song with or without a featured artist in milliseconds, seconds and minutes?
 Song with featured artist (1), song without featured artist (0) */
 SELECT featured,
 		AVG(duration_ms) AS avg_duration_milliseconds,
@@ -177,14 +184,7 @@ FROM CleanedTopSpotifySongs2018
 GROUP BY featured;
 
 
--- What are the songs with featured artists?
-SELECT cleaned_name AS song, cleaned_artists AS artitst, 
-		cleaned_artists_2 AS featured_artist
-FROM CleanedTopSpotifySongs2018
-WHERE featured = 1;
-
-
-/* What is longest song based on liveliness 
+/* What is the longest song based on liveliness? 
 liveliness determined by (mid to high danceability, mid to high energy, and more than 60 valence) */
 WITH liveliness AS (
 SELECT cleaned_artists, cleaned_name, danceability, energy, valence, duration_m,
@@ -206,7 +206,7 @@ ORDER BY duration_m DESC,
 		energy DESC;
 
 
-/* What is longest song with mellowness 
+/* What is the longest song with mellowness 
 mellowness determined by (mid to low danceability and mid to low energy) */
 WITH mellowness AS (
 SELECT cleaned_artists, cleaned_name, danceability, energy, valence, duration_m,
@@ -228,23 +228,23 @@ ORDER BY duration_m DESC,
 		energy ASC;
 
 
--- Songs with high/low valence against danceability
-WITH mood AS (
+-- What songs are which tempo group by artist against danceability?
+WITH speed AS (
 SELECT cleaned_artists, cleaned_name, danceability,
-		CASE WHEN valence >= 0.60 THEN 'high_valence'
-			WHEN valence <= 0.40 THEN 'low_valence'
-			ELSE 'moderate'
-			END AS song_feel
+		CASE WHEN tempo > 110.00 THEN 'high_tempo'
+			WHEN tempo < 95.00 THEN 'low_tempo'
+			ELSE 'mid_tempo'
+			END AS music_speed
 FROM CleanedTopSpotifySongs2018
 )
 SELECT cleaned_artists AS artists, cleaned_name AS song, 
-	CAST(ROUND(danceability, 2) AS DECIMAL(4,2)) AS danceability, song_feel,
-	COUNT(cleaned_artists) OVER(PARTITION BY cleaned_artists, song_feel) AS song_count
-FROM mood
-ORDER BY song_count DESC
+	CAST(ROUND(danceability, 2) AS DECIMAL(4,2)) AS danceability, music_speed,
+	COUNT(cleaned_artists) OVER(PARTITION BY cleaned_artists, music_speed) AS song_count
+FROM speed
+ORDER BY song_count DESC;
 
 
-/* Which songs are associated with euphoric, euthymic, or sad moods based on valence score
+/* Which songs are associated with euphoric, euthymic, or sad moods based on valence score?
 PERCENT_RANK was used to get a rank of the valence based on percetile
 NTILE was used to get thirds of the valence percentiles as reference to construct the range of valence moods
 Valence moods are positive affect (happy), euthymic (netral, content mood), negative affect (sad) */
